@@ -5,27 +5,35 @@ import pandas as pd
 uploaded_file = st.file_uploader("Upload an Excel file", type="xlsx")
 
 if uploaded_file:
-    # Read Excel file
+    # Read the Excel file
     df = pd.read_excel(uploaded_file)
-    
-    # Determine the number of material sections (each starting at a new material name in Row 1)
-    num_sections = len([col for col in df.columns if "تعداد" in col])
 
-    # Process each material section
-    for section in range(num_sections):
-        # Get the current column positions for "تعداد" and "فروش"
-        qty_col = f"تعداد_{section+1}"
-        sale_col = f"فروش_{section+1}"
+    # Identify and insert "گرماژ" columns to the left of each "تعداد" column
+    new_columns = []
+    gramaj_count = 1  # Counter for numbering "گرماژ" columns if duplicates are found
+    for col in df.columns:
+        # Check if the column is a "تعداد" column
+        if "تعداد" in col:
+            # Create a unique name for the new "گرماژ" column
+            gramaj_col = f"گرماژ_{gramaj_count}" if f"گرماژ" in df.columns else "گرماژ"
+            new_columns.append(gramaj_col)
+            gramaj_count += 1
+        new_columns.append(col)
 
-        # Insert "گرماژ" column after "تعداد"
-        gram_col = f"گرماژ_{section+1}"
-        df[gram_col] = df[sale_col] * df[qty_col]
+    # Reorder columns to insert "گرماژ" columns before each "تعداد"
+    df = df.reindex(columns=new_columns, fill_value=0)
 
-    # Create a summary row for each "گرماژ" column
-    summary_row = {col: df[col].sum() if "گرماژ" in col else "" for col in df.columns}
-    
-    # Append summary row to the DataFrame using pd.concat()
-    df = pd.concat([df, pd.DataFrame([summary_row])], ignore_index=True)
+    # Perform the calculations and populate the "گرماژ" columns
+    for i, col in enumerate(df.columns):
+        if "تعداد" in col:
+            # Get the corresponding "گرماژ" column on the left
+            gramaj_col = new_columns[new_columns.index(col) - 1]
+
+            # Get the "فروش" column for the section
+            sale_col = df.columns[new_columns.index(col) + 1]
+
+            # Calculate values by multiplying "فروش" by "تعداد" and store in "گرماژ"
+            df[gramaj_col] = df[sale_col] * df[col]
 
     # Display the updated DataFrame in Streamlit
     st.write("Updated DataFrame:")
@@ -39,6 +47,6 @@ if uploaded_file:
     st.download_button(
         label="Download updated Excel file",
         data=convert_df(df),
-        file_name="updated_product_material_kimia.xlsx",
+        file_name="updated_material_kimia.xlsx",
         mime="application/vnd.ms-excel"
     )
