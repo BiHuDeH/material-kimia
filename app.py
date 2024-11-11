@@ -21,16 +21,11 @@ if uploaded_file:
         gram_col = f"گرماژ_{section+1}"
         df[gram_col] = df[sale_col] * df[qty_col]
 
-    # Add a summary row for each "گرماژ" column
-    summary_row = {}
-    for col in df.columns:
-        if "گرماژ" in col:
-            summary_row[col] = df[col].sum()
-        else:
-            summary_row[col] = ""  # Keep other columns empty in the summary row
+    # Create a summary row for each "گرماژ" column
+    summary_row = {col: df[col].sum() if "گرماژ" in col else "" for col in df.columns}
     
-    # Append summary row to the DataFrame
-    df = df.append(summary_row, ignore_index=True)
+    # Append summary row to the DataFrame using pd.concat()
+    df = pd.concat([df, pd.DataFrame([summary_row])], ignore_index=True)
 
     # Display the updated DataFrame in Streamlit
     st.write("Updated DataFrame:")
