@@ -1,0 +1,6 @@
+pandas
+openpyxl
+cryptography
+xlsxwriter
+streamlit
+pdfplumber
