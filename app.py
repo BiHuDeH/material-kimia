@@ -8,37 +8,33 @@ if uploaded_file:
     # Read the Excel file
     df = pd.read_excel(uploaded_file)
 
-    # Initialize a counter for unique "گرماژ" columns
-    gramaj_counter = 1
-
-    # Create a new list of columns to handle insertions
+    # Create a new list to hold the modified column names
     new_columns = []
+    gramaj_counter = 1  # Counter for unique naming
+
+    # Loop through the columns and insert "گرماژ" before each "تعداد" column
     for col in df.columns:
-        # Check if the column is "تعداد"
         if "تعداد" in col:
-            # Create a unique name for the "گرماژ" column
-            gramaj_col = f"گرماژ_{gramaj_counter}" if f"گرماژ" in df.columns else "گرماژ"
+            # Generate a unique name for the new "گرماژ" column
+            gramaj_col = f"گرماژ_{gramaj_counter}"
             new_columns.append(gramaj_col)
-            gramaj_counter += 1  # Increment the counter for unique naming
+            gramaj_counter += 1
         new_columns.append(col)
 
-    # Reindex DataFrame with new columns to create empty "گرماژ" columns where needed
+    # Reindex DataFrame with new columns for "گرماژ" where needed
     df = df.reindex(columns=new_columns, fill_value=0)
 
     # Perform the calculations and populate the "گرماژ" columns
-    for col in df.columns:
+    for idx, col in enumerate(df.columns):
         if "تعداد" in col:
-            # Get the index of the "تعداد" column
-            idx = df.columns.get_loc(col)
-            
-            # Find the associated "گرماژ" column on the left
+            # The "گرماژ" column should be to the left of the "تعداد" column
             gramaj_col = df.columns[idx - 1]
+
+            # Locate the "فروش" column for the same section
+            sale_col = df.columns[idx + 1] if (idx + 1 < len(df.columns) and "فروش" in df.columns[idx + 1]) else None
             
-            # Get the associated "فروش" column, which should be to the right
-            sale_col = df.columns[idx + 1] if idx + 1 < len(df.columns) else None
-            
-            # If a corresponding "فروش" column exists, calculate "گرماژ"
-            if sale_col and "فروش" in sale_col:
+            # Calculate "گرماژ" values if "فروش" is found
+            if sale_col:
                 df[gramaj_col] = df[sale_col] * df[col]
 
     # Display the updated DataFrame in Streamlit
