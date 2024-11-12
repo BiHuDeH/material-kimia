@@ -9,6 +9,9 @@ if uploaded_file:
     # Read the Excel file
     df = pd.read_excel(uploaded_file)
 
+    # Replace blank cells with zero for calculations
+    df.fillna(0, inplace=True)
+
     # Create a new list to hold the modified column names
     new_columns = []
     gramaj_counter = 1  # Counter for unique naming
