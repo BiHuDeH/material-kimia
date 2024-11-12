@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
 
 # Load the file from an upload
 uploaded_file = st.file_uploader("Upload an Excel file", type="xlsx")
@@ -44,7 +45,11 @@ if uploaded_file:
     # Provide a download option for the updated DataFrame
     @st.cache_data
     def convert_df(df):
-        return df.to_excel(index=False)
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        processed_data = output.getvalue()
+        return processed_data
 
     st.download_button(
         label="Download updated Excel file",
