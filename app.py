@@ -12,32 +12,23 @@ if uploaded_file:
     # Replace blank cells with zero for calculations
     df.fillna(0, inplace=True)
 
-    # Create a new list to hold the modified column names
+    # Ensure unique column names for "گرماژ" and "تعداد" columns
+    columns = list(df.columns)
     new_columns = []
-    gramaj_counter = 1  # Counter for unique naming
-
-    # Loop through the columns and insert "گرماژ" before each "تعداد" column
-    for col in df.columns:
-        if "تعداد" in col:
-            # Generate a unique name for the new "گرماژ" column
-            gramaj_col = f"گرماژ_{gramaj_counter}"
-            new_columns.append(gramaj_col)
+    gramaj_counter = 1  # Counter for unique naming of "گرماژ"
+    for col in columns:
+        if col == "تعداد":
+            # Generate unique names for "گرماژ" columns
+            new_columns.append(f"گرماژ_{gramaj_counter}")
             gramaj_counter += 1
         new_columns.append(col)
+    df.columns = new_columns  # Update columns in DataFrame
 
-    # Reindex DataFrame with new columns for "گرماژ" where needed
-    df = df.reindex(columns=new_columns, fill_value=0)
-
-    # Perform the calculations and populate the "گرماژ" columns
+    # Add calculated "گرماژ" columns before each "تعداد" column
     for idx, col in enumerate(df.columns):
         if "تعداد" in col:
-            # The "گرماژ" column should be to the left of the "تعداد" column
             gramaj_col = df.columns[idx - 1]
-
-            # Locate the "فروش" column for the same section
             sale_col = df.columns[idx + 1] if (idx + 1 < len(df.columns) and "فروش" in df.columns[idx + 1]) else None
-            
-            # Calculate "گرماژ" values if "فروش" is found
             if sale_col:
                 df[gramaj_col] = df[sale_col] * df[col]
 
@@ -45,18 +36,19 @@ if uploaded_file:
     st.write("Updated DataFrame:")
     st.dataframe(df)
 
-    # Provide a download option for the updated DataFrame
+    # Define a function to convert DataFrame to Excel format for download
     @st.cache_data
-    def convert_df(df):
+    def convert_df_to_excel(df):
         output = BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False)
         processed_data = output.getvalue()
         return processed_data
 
+    # Provide a download button for the updated DataFrame
     st.download_button(
         label="Download updated Excel file",
-        data=convert_df(df),
+        data=convert_df_to_excel(df),
         file_name="updated_material_kimia.xlsx",
         mime="application/vnd.ms-excel"
     )
